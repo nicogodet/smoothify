@@ -17,6 +17,7 @@ from shapely.geometry import (
 from shapely.geometry.base import BaseGeometry
 
 from .smoothify_core import _join_adjacent, _smoothify_geometry
+from .topology import smoothify_with_topology
 
 
 def _smoothify_multipolygon(
@@ -212,14 +213,40 @@ def _smoothify_geodataframe(
     preserve_area: bool,
     area_tolerance: float = 0.01,
     merge_field: Optional[str] = None,
+    preserve_topology: bool = False,
 ) -> gpd.GeoDataFrame:
     """Smooth all geometries in a GeoDataFrame with optional parallel processing.
 
     Processes each geometry in a GeoDataFrame using Chaikin corner cutting.
     Optionally merges adjacent features before smoothing and supports parallel
-    execution for large datasets."""  # noqa: E501
+    execution for large datasets.
+
+    Args:
+        gdf: GeoDataFrame to smooth
+        segment_length: Target segment length for densification
+        num_cores: Number of CPU cores for parallel processing
+        smooth_iterations: Number of Chaikin corner-cutting iterations
+        merge_collection: Whether to merge adjacent polygons before smoothing
+        merge_multipolygons: Whether to merge adjacent polygons within MultiPolygons
+        preserve_area: Whether to restore original area after smoothing
+        area_tolerance: Percentage of original area allowed as error
+        merge_field: Column name for grouping polygons during dissolve
+        preserve_topology: Whether to preserve shared boundaries between adjacent
+            polygons. When True, uses topology-aware smoothing to ensure no gaps
+            or overlaps at shared boundaries.
+    """  # noqa: E501
 
     modified_gdf = gdf.copy()
+
+    # Use topology-aware smoothing if requested
+    if preserve_topology:
+        return smoothify_with_topology(
+            geometries=modified_gdf,
+            segment_length=segment_length,
+            smooth_iterations=smooth_iterations,
+            preserve_area=preserve_area,
+            area_tolerance=area_tolerance,
+        )
 
     if merge_collection:
         # Only merge polygons, not linestrings
