@@ -9,6 +9,7 @@ without gaps or overlaps.
 from collections import defaultdict
 
 import geopandas as gpd
+from shapely import make_valid
 from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 
@@ -255,8 +256,6 @@ def rebuild_polygons_from_edges(
                     result_polygons.append(polygon)
                 else:
                     # Try to fix with make_valid
-                    from shapely import make_valid
-
                     fixed = make_valid(polygon)
                     if isinstance(fixed, Polygon):
                         result_polygons.append(fixed)
@@ -404,15 +403,18 @@ def smoothify_with_topology(
         )
 
     # Reconstruct full result with non-polygon geometries in original positions
-    result_list: list[BaseGeometry] = [None] * len(polygon_list)  # type: ignore
+    result_dict: dict[int, BaseGeometry] = {}
 
     # Place smoothed polygons back
     for orig_idx, smoothed_poly in zip(polygon_indices, smoothed_polygons, strict=True):
-        result_list[orig_idx] = smoothed_poly
+        result_dict[orig_idx] = smoothed_poly
 
     # Place non-polygon geometries back
     for idx, geom in other_geometries.items():
-        result_list[idx] = geom
+        result_dict[idx] = geom
+
+    # Build result list in original order
+    result_list = [result_dict[i] for i in range(len(polygon_list))]
 
     # Return in appropriate format
     if is_geodataframe:
@@ -420,4 +422,5 @@ def smoothify_with_topology(
         result_gdf.geometry = result_list
         return result_gdf
     else:
+        # Return only the Polygon geometries (preserving order) for list input
         return [g for g in result_list if isinstance(g, Polygon)]
