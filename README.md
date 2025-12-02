@@ -182,6 +182,73 @@ smoothed = smoothify(
 | `merge_multipolygons` | bool | True | Whether to merge adjacent polygons within MultiPolygons before smoothing |
 | `preserve_area` | bool | True | Whether to restore original area after smoothing via buffering (applies to Polygons only) |
 | `area_tolerance` | float | 0.01 | Percentage of original area allowed as error (e.g., 0.01 = 0.01% error = 99.99% preservation). Only affects Polygons when preserve_area=True |
+| `preserve_topology` | bool | False | **GeoDataFrame only**: Whether to preserve shared boundaries between adjacent polygons. When True, uses topology-aware smoothing to ensure no gaps or overlaps at shared boundaries |
+
+## Topology-Aware Smoothing
+
+When working with adjacent polygons that form a complete coverage (like land use maps, administrative boundaries, or parcel data), standard smoothing can cause:
+
+- **Gaps** between polygons that should be adjacent
+- **Overlaps** where smoothed boundaries cross over each other
+- **Loss of topological integrity** in datasets where polygons should form a seamless coverage
+
+Smoothify provides a **topology-aware smoothing** mode that preserves shared boundaries between adjacent polygons.
+
+### Usage
+
+```python
+import geopandas as gpd
+from smoothify import smoothify
+
+# Load adjacent polygons (e.g., land parcels, administrative units)
+gdf = gpd.read_file("land_use.gpkg")
+
+# Smooth while preserving shared boundaries
+smoothed_gdf = smoothify(
+    gdf,
+    segment_length=10.0,
+    smooth_iterations=3,
+    preserve_topology=True  # Enable topology-aware smoothing
+)
+
+# Result: smoothed polygons with no gaps or overlaps at boundaries
+```
+
+### How It Works
+
+The topology-aware smoothing approach:
+
+1. **Pre-processing**: Extracts all unique edges from the polygon collection and identifies shared boundaries
+2. **Smoothing**: Applies Chaikin's corner-cutting algorithm to each unique edge exactly once
+3. **Reconstruction**: Rebuilds polygons from the smoothed edges, ensuring shared boundaries remain identical
+
+### When to Use
+
+Use `preserve_topology=True` when:
+
+- Polygons represent adjacent areas that should share exact boundaries (land use, zoning, administrative units)
+- You need to maintain topological relationships for spatial analysis
+- Gaps or overlaps between smoothed polygons would be problematic
+
+### Direct Function Access
+
+You can also use the topology-aware smoothing function directly:
+
+```python
+from smoothify import smoothify_with_topology
+from shapely.geometry import Polygon
+
+# Two adjacent squares
+poly1 = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+poly2 = Polygon([(10, 0), (20, 0), (20, 10), (10, 10)])
+
+# Smooth while preserving the shared edge at x=10
+smoothed = smoothify_with_topology(
+    [poly1, poly2],
+    segment_length=1.0,
+    smooth_iterations=3
+)
+```
 
 ## How It Works
 

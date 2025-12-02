@@ -31,6 +31,7 @@ def smoothify(
     merge_multipolygons: bool = True,
     preserve_area: bool = True,
     area_tolerance: float = 0.01,
+    preserve_topology: bool = False,
 ) -> gpd.GeoDataFrame: ...
 
 
@@ -45,6 +46,7 @@ def smoothify(
     merge_multipolygons: bool = True,
     preserve_area: bool = True,
     area_tolerance: float = 0.01,
+    preserve_topology: bool = False,
 ) -> BaseGeometry: ...
 
 
@@ -59,6 +61,7 @@ def smoothify(
     merge_multipolygons: bool = True,
     preserve_area: bool = True,
     area_tolerance: float = 0.01,
+    preserve_topology: bool = False,
 ) -> BaseGeometry: ...
 
 
@@ -72,6 +75,7 @@ def smoothify(
     merge_multipolygons: bool = True,
     preserve_area: bool = True,
     area_tolerance: float = 0.01,
+    preserve_topology: bool = False,
 ) -> BaseGeometry | Sequence[BaseGeometry] | gpd.GeoDataFrame:
     """Smooth geometries derived from raster data using Chaikin's corner-cutting algorithm.
 
@@ -108,6 +112,11 @@ def smoothify(
             (e.g., 0.01 = 0.01% error). Default is 0.01% (99.99% area preservation).
             Smaller values = more accurate area preservation but slower.
             Only affects Polygons when preserve_area=True.
+        preserve_topology: Whether to preserve shared boundaries between adjacent
+            polygons. When True, uses topology-aware smoothing to ensure no gaps
+            or overlaps at shared boundaries. Only applies to GeoDataFrames. Use this
+            for datasets where polygons form a complete coverage (like land use maps,
+            administrative boundaries, etc.).
 
     Returns:
         Smoothed geometry matching the input type:
@@ -133,6 +142,10 @@ def smoothify(
         >>> # Smooth a GeoDataFrame in parallel
         >>> gdf = gpd.read_file("water_bodies.gpkg")
         >>> smoothed_gdf = smoothify(gdf, segment_length=10.0, num_cores=4)
+        >>>
+        >>> # Smooth adjacent polygons while preserving shared boundaries
+        >>> land_use_gdf = gpd.read_file("land_use.gpkg")
+        >>> smoothed_gdf = smoothify(land_use_gdf, segment_length=10.0, preserve_topology=True)
     """  # noqa: E501
     if num_cores <= 0:
         num_cores = cpu_count()
@@ -183,6 +196,7 @@ def smoothify(
             preserve_area=preserve_area,
             area_tolerance=area_tolerance,
             merge_field=merge_field,
+            preserve_topology=preserve_topology,
         )
     else:
         raise ValueError(
