@@ -17,6 +17,7 @@ from shapely.geometry import (
 from shapely.geometry.base import BaseGeometry
 
 from .smoothify_core import _join_adjacent, _smoothify_geometry
+from .topology import smoothify_with_topology
 
 
 def _smoothify_multipolygon(
@@ -239,8 +240,6 @@ def _smoothify_geodataframe(
 
     # Use topology-aware smoothing if requested
     if preserve_topology:
-        from .topology import smoothify_with_topology
-
         return smoothify_with_topology(
             geometries=modified_gdf,
             segment_length=segment_length,

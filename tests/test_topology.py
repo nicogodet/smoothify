@@ -4,13 +4,14 @@ import geopandas as gpd
 import pytest
 from shapely.geometry import LineString, Polygon
 
-from smoothify import smoothify, smoothify_with_topology
+from smoothify import smoothify
 from smoothify.topology import (
     _identify_shared_edges,
     _normalize_edge,
     extract_shared_edges,
     rebuild_polygons_from_edges,
     smooth_edges,
+    smoothify_with_topology,
 )
 
 

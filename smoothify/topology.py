@@ -13,7 +13,7 @@ from shapely import make_valid
 from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 
-from .smoothify_core import _chaikin_corner_cutting
+from .smoothify_core import _chaikin_corner_cutting, _preserve_area_with_buffer
 
 
 def _normalize_edge(p1: tuple, p2: tuple) -> tuple:
@@ -288,8 +288,6 @@ def _apply_area_preservation(
     Returns:
         List of area-preserved polygons
     """
-    from .smoothify_core import _preserve_area_with_buffer
-
     result = []
     for smoothed, original in zip(smoothed_polygons, original_polygons, strict=True):
         if original.is_empty or smoothed.is_empty:

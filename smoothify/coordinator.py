@@ -1,3 +1,4 @@
+import warnings
 from multiprocessing import cpu_count
 from typing import Optional, Sequence, overload
 
@@ -164,6 +165,14 @@ def smoothify(
             raise ValueError(
                 "merge_field is only supported when merge_collection is True."
             )
+
+    if preserve_topology and not isinstance(geom, gpd.GeoDataFrame):
+        warnings.warn(
+            "preserve_topology is only supported for GeoDataFrames. "
+            "This option will be ignored.",
+            UserWarning,
+            stacklevel=2,
+        )
 
     if isinstance(geom, GeometryCollection | MultiPolygon | MultiLineString):
         return _smoothify_bulk(

@@ -230,26 +230,6 @@ Use `preserve_topology=True` when:
 - You need to maintain topological relationships for spatial analysis
 - Gaps or overlaps between smoothed polygons would be problematic
 
-### Direct Function Access
-
-You can also use the topology-aware smoothing function directly:
-
-```python
-from smoothify import smoothify_with_topology
-from shapely.geometry import Polygon
-
-# Two adjacent squares
-poly1 = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
-poly2 = Polygon([(10, 0), (20, 0), (20, 10), (10, 10)])
-
-# Smooth while preserving the shared edge at x=10
-smoothed = smoothify_with_topology(
-    [poly1, poly2],
-    segment_length=1.0,
-    smooth_iterations=3
-)
-```
-
 ## How It Works
 
 Smoothify uses an advanced multi-step smoothing pipeline:
